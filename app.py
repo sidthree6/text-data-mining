@@ -30,27 +30,19 @@ server = app.server
 
 dataset = pd.read_csv('https://raw.githubusercontent.com/Group-7-Big-Data/Assignment-2/master/IMDB_review_cleaned.csv')
 
-def predict_sentence(text, df):
+load_tfidf = pd.read_pickle('https://bitbucket.org/sidthree16/text-mining-model-save/raw/4d362788e3668b74cef0f25bee8d1bb78ae80eb9/tfidf.sav')
+
+load_svc = pd.read_pickle('https://bitbucket.org/sidthree16/text-mining-model-save/raw/4d362788e3668b74cef0f25bee8d1bb78ae80eb9/linearsvc.sav')
+
+def predict_sentence(text, tfidf, svc, df):
     text = BeautifulSoup(text).get_text()
     text = re.sub('[^a-zA-Z]', ' ', text)
     text = text.lower()
     text = [text]
     
-    extra = pd.Series(text)
-    review_series = df.review.append(extra, ignore_index=True)
+    tfid_transformed_text = tfidf.transform(text)
     
-    tfid = TfidfVectorizer(ngram_range=(1,2))
-    tfid_transformed = tfid.fit_transform(review_series)
-    
-    tfid_matrix = tfid_transformed[:50000]
-    tfid_predict = tfid_transformed[-1:]
-    
-    X_train, X_test, y_train, y_test = train_test_split(tfid_matrix, df.sentiment, test_size=0.3, random_state=0)
-    
-    svc_m = LinearSVC()
-    svc_m.fit(tfid_matrix, df.sentiment)
-    
-    y_pred = svc_m.predict(tfid_predict)
+    y_pred = svc.predict(tfid_transformed_text)
     
     return y_pred
 
@@ -71,7 +63,7 @@ app.layout = html.Div([
               [dash.dependencies.Input('submit-button-state', 'n_clicks')],
               [dash.dependencies.State('sentence', 'value')])
 def display_value(n_clicks, value):
-    prediction = predict_sentence(value, dataset)
+    prediction = predict_sentence(value, load_tfidf, load_svc, dataset)
     output = []
     output.append(html.P('Your sentence sentiment prediction is "{}"'.format(prediction[0])))
     output.append(html.P('Sentence: {}'.format(value)))
