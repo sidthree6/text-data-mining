@@ -30,22 +30,6 @@ server = app.server
 
 dataset = pd.read_csv('https://raw.githubusercontent.com/Group-7-Big-Data/Assignment-2/master/IMDB_review_cleaned.csv')
 
-load_tfidf = pd.read_pickle('https://bitbucket.org/sidthree16/text-mining-model-save/raw/4d362788e3668b74cef0f25bee8d1bb78ae80eb9/tfidf.sav')
-
-load_svc = pd.read_pickle('https://bitbucket.org/sidthree16/text-mining-model-save/raw/4d362788e3668b74cef0f25bee8d1bb78ae80eb9/linearsvc.sav')
-
-def predict_sentence(text, tfidf, svc, df):
-    text = BeautifulSoup(text).get_text()
-    text = re.sub('[^a-zA-Z]', ' ', text)
-    text = text.lower()
-    text = [text]
-    
-    tfid_transformed_text = tfidf.transform(text)
-    
-    y_pred = svc.predict(tfid_transformed_text)
-    
-    return y_pred
-
 app.layout = html.Div([
     html.H2('Movie review sentiment predictor:'),
     html.P('Please write down a sentence'),
@@ -59,14 +43,35 @@ app.layout = html.Div([
     html.Div(id='display-value')
 ])
 
+#load_tfidf = pd.read_pickle('https://www.dropbox.com/s/xda1lt9jzxkmw3t/tfidf.sav?dl=1')
+
+#load_svc = pd.read_pickle('https://www.dropbox.com/s/lcz7w8io99xggus/linearsvc.sav?dl=1')
+
+def predict_sentence(text, tfidf, svc, df):
+    text = BeautifulSoup(text).get_text()
+    text = re.sub('[^a-zA-Z]', ' ', text)
+    text = text.lower()
+    text = [text]
+    
+    tfid_transformed_text = tfidf.transform(text)
+    
+    y_pred = svc.predict(tfid_transformed_text)
+    
+    return y_pred
+
+load_tfidf = pd.read_pickle('https://www.dropbox.com/s/xda1lt9jzxkmw3t/tfidf.sav?dl=1')
+load_svc = pd.read_pickle('https://www.dropbox.com/s/lcz7w8io99xggus/linearsvc.sav?dl=1')
+
 @app.callback(dash.dependencies.Output('display-value', 'children'),
               [dash.dependencies.Input('submit-button-state', 'n_clicks')],
-              [dash.dependencies.State('sentence', 'value')])
+              [dash.dependencies.State('sentence', 'value')])    
 def display_value(n_clicks, value):
-    prediction = predict_sentence(value, load_tfidf, load_svc, dataset)
     output = []
-    output.append(html.P('Your sentence sentiment prediction is "{}"'.format(prediction[0])))
-    output.append(html.P('Sentence: {}'.format(value)))
+    
+    if n_clicks is not 0:        
+        prediction = predict_sentence(value, load_tfidf, load_svc, dataset)
+        output.append(html.P('Your sentence sentiment prediction is "{}"'.format(prediction[0])))
+        output.append(html.P('Sentence: {}'.format(value)))
     
     return output
     
